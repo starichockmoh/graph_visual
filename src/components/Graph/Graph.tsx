@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import GraphClass from 'graphs/graph';
+import GraphClass, { IVertex } from 'graphs/graph';
 import {
   Graph as GraphD3,
   GraphConfiguration,
@@ -13,6 +13,7 @@ import {
   Card,
   CardContent,
   Divider,
+  Input,
   List,
   ListItem,
   ListItemText,
@@ -144,6 +145,49 @@ export default function Graph() {
     setQueue([]);
   };
 
+  useEffect(() => {
+    if (!!document) {
+      document
+        ?.querySelector('#read-button')
+        ?.addEventListener('click', function () {
+          try {
+            // @ts-ignore
+            let file = document?.querySelector('#file-input')?.files[0];
+            let reader = new FileReader();
+            reader.addEventListener('load', function (e) {
+              try {
+                console.log('4343');
+                let text = e.target?.result;
+                setGraph(() => {
+                  try {
+                    const graphJSON = JSON.parse(text as string) as {
+                      isOrient: boolean;
+                      vertices: IVertex;
+                    };
+                    console.log(graphJSON);
+                    return new GraphClass(false, graphJSON.vertices);
+                  } catch (e) {
+                    alert('Файл некорректен');
+                    return new GraphClass();
+                  }
+                });
+                setStack([]);
+                setQueue([]);
+                setVisited([]);
+                setIsProceed(false);
+                setIsShowAlert(false);
+              } catch (e) {
+                alert('Файл некорректен');
+              }
+            });
+            reader.readAsText(file);
+          } catch (e) {
+            alert('Файл некорректен');
+          }
+        });
+    }
+  }, []);
+
   return (
     <div>
       {isShowAlert && (
@@ -271,6 +315,18 @@ export default function Graph() {
           </List>
         </CardContent>
       </Card>
+      <Box sx={{ mt: 5 }}>
+        <Input type="file" id="file-input" />
+        <Button
+          sx={{ ml: 2 }}
+          variant={'contained'}
+          disabled={isProceed}
+          id="read-button"
+        >
+          Прочесть файл
+        </Button>
+        <pre id="file-contents"></pre>
+      </Box>
     </div>
   );
 }
